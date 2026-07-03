@@ -1,165 +1,255 @@
-// ============ INIT ============
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize default products if empty
-    if (!localStorage.getItem('products')) {
-        const defaultProducts = [
-            { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសម្រាប់ហាងអនឡាញ", vendor: "DevMaster" },
-            { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សម្រាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
-            { id: 3, title: "Portfolio Template", category: "template", price: 19, icon: "fa-briefcase", desc: "Template ស្អាតសម្រាប់ Portfolio", vendor: "TemplateHub" },
-            { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" }
-        ];
-        localStorage.setItem('products', JSON.stringify(defaultProducts));
-    }
-    
-    renderProductsTable();
-});
+// Password
+const ADMIN_PASSWORD = 'admin147369ahnajakcode';
 
-// ============ ADD PRODUCT ============
-document.getElementById('addProductForm').addEventListener('submit', (e) => {
+// Check if already logged in
+if (localStorage.getItem('adminLoggedIn') === 'true') {
+    showDashboard();
+}
+
+// Login Form
+document.getElementById('loginForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const newProduct = {
-        id: Date.now(),
-        title: document.getElementById('p-title').value.trim(),
-        category: document.getElementById('p-category').value,
-        price: parseFloat(document.getElementById('p-price').value),
-        vendor: document.getElementById('p-vendor').value.trim(),
-        desc: document.getElementById('p-desc').value.trim(),
-        icon: document.getElementById('p-icon').value.trim() || 'fa-code'
-    };
+    const password = document.getElementById('adminPassword').value;
     
-    // Get existing products
-    const products = JSON.parse(localStorage.getItem('products')) || [];
-    products.push(newProduct);
-    
-    // Save to localStorage (User will see this immediately!)
-    localStorage.setItem('products', JSON.stringify(products));
-    
-    // Reset form
-    document.getElementById('addProductForm').reset();
-    document.getElementById('p-icon').value = 'fa-code';
-    
-    // Update table
-    renderProductsTable();
-    
-    // Show success
-    showToast(`✅ "${newProduct.title}" added successfully!`);
+    if (password === ADMIN_PASSWORD) {
+        localStorage.setItem('adminLoggedIn', 'true');
+        showDashboard();
+        showToast('✅ Login successful!');
+    } else {
+        showToast('❌ Wrong password!', 'error');
+    }
 });
 
-// ============ RENDER PRODUCTS TABLE ============
-function renderProductsTable(products = null) {
-    const allProducts = products || JSON.parse(localStorage.getItem('products')) || [];
+function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'flex';
+    loadAllData();
+}
+
+function logout() {
+    localStorage.removeItem('adminLoggedIn');
+    location.reload();
+}
+
+// Navigation
+function showSection(section) {
+    // Update menu
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+    
+    // Show section
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById(section + '-section').classList.add('active');
+    
+    // Load data
+    if (section === 'products') loadProducts();
+    if (section === 'orders') loadOrders();
+    if (section === 'users') loadUsers();
+    if (section === 'analytics') loadAnalytics();
+    
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) {
+        document.querySelector('.sidebar').classList.remove('active');
+    }
+}
+
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+
+// Load All Data
+function loadAllData() {
+    loadProducts();
+    loadOrders();
+    loadUsers();
+    loadAnalytics();
+}
+
+// PRODUCTS
+function loadProducts() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
     const tbody = document.getElementById('productsTableBody');
     
-    document.getElementById('productCount').textContent = allProducts.length;
+    document.getElementById('totalProducts').textContent = products.length;
     
-    if (allProducts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">No products yet. Add your first product above!</td></tr>';
+    const totalValue = products.reduce((sum, p) => sum + (p.price || 0), 0);
+    document.getElementById('totalValue').textContent = '$' + totalValue.toLocaleString();
+    
+    if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No products yet</td></tr>';
         return;
     }
     
-    tbody.innerHTML = allProducts.map(p => `
+    tbody.innerHTML = products.map(p => `
         <tr>
-            <td><span class="product-icon-cell"><i class="fas ${p.icon}"></i></span></td>
-            <td><strong>${p.title}</strong><br><small style="color:var(--text-muted);">${p.vendor}</small></td>
+            <td><span class="product-icon"><i class="fas ${p.icon || 'fa-code'}"></i></span></td>
+            <td><strong>${p.title}</strong></td>
             <td><span class="category-badge">${p.category}</span></td>
-            <td><strong style="color:var(--success);">$${p.price}</strong></td>
+            <td><strong>$${p.price}</strong></td>
+            <td>${p.vendor}</td>
+            <td>${p.downloads || 0}</td>
             <td>
-                <button class="btn-edit" onclick="openEditModal(${p.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn-delete" onclick="deleteProduct(${p.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <button class="btn-edit" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i></button>
+                <button class="btn-delete" onclick="deleteProduct(${p.id})"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `).join('');
 }
 
-// ============ SEARCH ============
-function searchProducts() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    const products = JSON.parse(localStorage.getItem('products')) || [];
+// ORDERS
+function loadOrders() {
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const orders = [];
     
-    const filtered = products.filter(p => 
-        p.title.toLowerCase().includes(query) || 
-        p.desc.toLowerCase().includes(query) ||
-        p.vendor.toLowerCase().includes(query)
-    );
+    users.forEach(user => {
+        const purchases = user.purchases || [];
+        purchases.forEach(p => {
+            orders.push({
+                id: 'ORD-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
+                customer: user.name,
+                email: user.email,
+                product: p.title,
+                amount: p.price,
+                date: new Date().toLocaleDateString(),
+                status: 'completed'
+            });
+        });
+    });
     
-    renderProductsTable(filtered);
+    document.getElementById('totalOrders').textContent = orders.length;
+    document.getElementById('ordersBadge').textContent = orders.length;
+    
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
+    document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString();
+    
+    const tbody = document.getElementById('ordersTableBody');
+    
+    if (orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No orders yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = orders.map(o => `
+        <tr>
+            <td><strong>${o.id}</strong></td>
+            <td>${o.customer}<br><small style="color:var(--text-muted)">${o.email}</small></td>
+            <td>${o.product}</td>
+            <td><strong>$${o.amount}</strong></td>
+            <td>${o.date}</td>
+            <td><span class="status-badge completed">${o.status}</span></td>
+        </tr>
+    `).join('');
 }
 
-// ============ EDIT PRODUCT ============
-function openEditModal(id) {
+// USERS
+function loadUsers() {
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    document.getElementById('totalUsers').textContent = users.length;
+    
+    const tbody = document.getElementById('usersTableBody');
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">No users yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td><strong>${u.name}</strong></td>
+            <td>${u.email}</td>
+            <td><span class="category-badge">${u.role || 'user'}</span></td>
+            <td>${(u.purchases || []).length}</td>
+            <td>${new Date().toLocaleDateString()}</td>
+        </tr>
+    `).join('');
+}
+
+// ANALYTICS
+function loadAnalytics() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    const totalDownloads = products.reduce((sum, p) => sum + (p.downloads || 0), 0);
+    document.getElementById('totalDownloads').textContent = totalDownloads;
+}
+
+// Product Modal
+const modal = document.getElementById('productModal');
+
+function openProductModal() {
+    document.getElementById('productForm').reset();
+    document.getElementById('edit-id').value = '';
+    modal.classList.add('active');
+}
+
+function closeProductModal() {
+    modal.classList.remove('active');
+}
+
+function editProduct(id) {
     const products = JSON.parse(localStorage.getItem('products')) || [];
     const product = products.find(p => p.id === id);
     
-    if (!product) return;
-    
-    document.getElementById('edit-id').value = product.id;
-    document.getElementById('edit-title').value = product.title;
-    document.getElementById('edit-category').value = product.category;
-    document.getElementById('edit-price').value = product.price;
-    document.getElementById('edit-vendor').value = product.vendor;
-    document.getElementById('edit-desc').value = product.desc;
-    document.getElementById('edit-icon').value = product.icon;
-    
-    document.getElementById('editModal').classList.add('active');
+    if (product) {
+        document.getElementById('edit-id').value = product.id;
+        document.getElementById('p-title').value = product.title;
+        document.getElementById('p-category').value = product.category;
+        document.getElementById('p-price').value = product.price;
+        document.getElementById('p-vendor').value = product.vendor;
+        document.getElementById('p-desc').value = product.desc;
+        document.getElementById('p-icon').value = product.icon || 'fa-code';
+        modal.classList.add('active');
+    }
 }
 
-function closeEditModal() {
-    document.getElementById('editModal').classList.remove('active');
-}
-
-document.getElementById('editProductForm').addEventListener('submit', (e) => {
+document.getElementById('productForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const id = parseInt(document.getElementById('edit-id').value);
-    const products = JSON.parse(localStorage.getItem('products')) || [];
-    const index = products.findIndex(p => p.id === id);
+    const id = document.getElementById('edit-id').value;
+    let products = JSON.parse(localStorage.getItem('products')) || [];
     
-    if (index === -1) return;
-    
-    // Update product
-    products[index] = {
-        id: id,
-        title: document.getElementById('edit-title').value.trim(),
-        category: document.getElementById('edit-category').value,
-        price: parseFloat(document.getElementById('edit-price').value),
-        vendor: document.getElementById('edit-vendor').value.trim(),
-        desc: document.getElementById('edit-desc').value.trim(),
-        icon: document.getElementById('edit-icon').value.trim()
+    const productData = {
+        id: id ? parseInt(id) : Date.now(),
+        title: document.getElementById('p-title').value.trim(),
+        category: document.getElementById('p-category').value,
+        price: parseFloat(document.getElementById('p-price').value),
+        vendor: document.getElementById('p-vendor').value.trim(),
+        desc: document.getElementById('p-desc').value.trim(),
+        icon: document.getElementById('p-icon').value.trim() || 'fa-code',
+        downloads: id ? products.find(p => p.id === parseInt(id))?.downloads || 0 : 0
     };
     
-    // Save
+    if (id) {
+        const index = products.findIndex(p => p.id === parseInt(id));
+        products[index] = productData;
+    } else {
+        products.push(productData);
+    }
+    
     localStorage.setItem('products', JSON.stringify(products));
-    
-    // Close modal and refresh
-    closeEditModal();
-    renderProductsTable();
-    
-    showToast('✅ Product updated successfully!');
+    closeProductModal();
+    loadProducts();
+    showToast(id ? '✅ Product updated!' : '✅ Product added!');
 });
 
-// ============ DELETE PRODUCT ============
 function deleteProduct(id) {
     if (!confirm('Are you sure you want to delete this product?')) return;
     
     let products = JSON.parse(localStorage.getItem('products')) || [];
     products = products.filter(p => p.id !== id);
-    
     localStorage.setItem('products', JSON.stringify(products));
-    renderProductsTable();
-    
+    loadProducts();
     showToast('🗑️ Product deleted!');
 }
 
-// ============ TOAST ============
-function showToast(message) {
+// Toast
+function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
-    toast.classList.add('show');
+    toast.className = 'toast show' + (type === 'error' ? ' error' : '');
     
     setTimeout(() => {
         toast.classList.remove('show');
@@ -167,8 +257,8 @@ function showToast(message) {
 }
 
 // Close modal when clicking outside
-document.getElementById('editModal').addEventListener('click', (e) => {
-    if (e.target.id === 'editModal') {
-        closeEditModal();
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        closeProductModal();
     }
 });
