@@ -4,57 +4,95 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <meta name="theme-color" content="#6366f1" />
-  <title>AhnajakCode - Script, Plugins & Digital Products</title>
+  <title>AhnajakCode</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
 
-  <!-- NAVBAR -->
+  <!-- TOP NAVBAR -->
   <nav class="navbar">
-    <div class="container nav-container">
+    <div class="nav-container">
+      <!-- Left Side - Hamburger Menu -->
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <!-- Logo -->
       <a href="#" class="logo" onclick="showPage('home')">
         <i class="fas fa-code"></i> Ahnajak<span>Code</span>
       </a>
       
-      <!-- Mobile Menu Toggle -->
-      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-        <i class="fas fa-bars"></i>
-      </button>
-      
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#" onclick="showPage('home')">Home</a></li>
-        <li><a href="#" onclick="showPage('products')">Products</a></li>
-        <li><a href="#" onclick="showPage('about')">About</a></li>
-        
+      <!-- Right Side - Cart, Theme, Currency, Profile -->
+      <div class="nav-right">
         <!-- Currency Selector -->
-        <li class="currency-selector">
+        <div class="currency-selector">
           <select id="currencySelect" onchange="changeCurrency()">
             <option value="USD">💵 USD</option>
             <option value="KHR">🇰🇭 KHR</option>
-            <option value="THB">🇹🇭 THB</option>
-            <option value="EUR">🇪🇺 EUR</option>
           </select>
-        </li>
+        </div>
         
         <!-- Theme Toggle -->
-        <li>
-          <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
-            <i class="fas fa-moon" id="themeIcon"></i>
-          </button>
-        </li>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+          <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
         
-        <li class="cart-icon" onclick="showPage('cart')">
+        <!-- Cart -->
+        <div class="cart-icon" onclick="showPage('cart')">
           <i class="fas fa-shopping-cart"></i>
           <span class="cart-count" id="cartCount">0</span>
-        </li>
+        </div>
         
-        <li id="authNav">
-          <a href="#" onclick="showPage('login')" class="btn-login">Login</a>
-        </li>
-      </ul>
+        <!-- Profile Icon -->
+        <div class="profile-icon" onclick="toggleProfileDropdown()">
+          <i class="fas fa-user-circle"></i>
+        </div>
+      </div>
     </div>
   </nav>
+
+  <!-- SIDEBAR NAVIGATION (Left) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3><i class="fas fa-code"></i> Menu</h3>
+      <button class="close-sidebar" onclick="toggleSidebar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="#" onclick="showPage('home'); toggleSidebar();"><i class="fas fa-home"></i> Home</a></li>
+      <li><a href="#" onclick="showPage('products'); toggleSidebar();"><i class="fas fa-box"></i> Products</a></li>
+      <li><a href="#" onclick="showPage('about'); toggleSidebar();"><i class="fas fa-info-circle"></i> About Us</a></li>
+      <li class="sidebar-divider"></li>
+      <li id="sidebarAuth">
+        <a href="#" onclick="showPage('login'); toggleSidebar();"><i class="fas fa-sign-in-alt"></i> Login</a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- PROFILE DROPDOWN (Right) -->
+  <div class="profile-dropdown" id="profileDropdown">
+    <div class="profile-dropdown-header">
+      <i class="fas fa-user-circle"></i>
+      <div>
+        <h4 id="profileName">Guest</h4>
+        <p id="profileEmail">Please login</p>
+      </div>
+    </div>
+    <ul class="profile-menu">
+      <li><a href="#" onclick="showPage('profile'); toggleProfileDropdown();"><i class="fas fa-user"></i> My Profile</a></li>
+      <li><a href="#" onclick="showPage('dashboard'); toggleProfileDropdown();"><i class="fas fa-box"></i> My Purchases</a></li>
+      <li><a href="#" onclick="showPage('cart'); toggleProfileDropdown();"><i class="fas fa-shopping-cart"></i> My Cart</a></li>
+      <li class="profile-divider"></li>
+      <li id="profileAuth">
+        <a href="#" onclick="showPage('login'); toggleProfileDropdown();"><i class="fas fa-sign-in-alt"></i> Login / Register</a>
+      </li>
+    </ul>
+  </div>
 
   <!-- HOME PAGE -->
   <section id="home" class="page active">
@@ -116,8 +154,9 @@
   <!-- ABOUT PAGE -->
   <section id="about" class="page">
     <div class="container about-content">
-      <h2 class="section-title">About AhnajakCode</h2>
+      <h2 class="section-title">About Us</h2>
       <p>AhnajakCode គឺជាវេបសាយលក់ Digital Products ដែលផ្តល់ជូននូវ Script, Plugin, Template និង UI Kit គុណភាពខ្ពស់។</p>
+      <p>យើងប្តេជ្ញាផ្តល់នូវផលិតផលដែលមានគុណភាព, ងាយស្រួលប្រើ និងមានតម្លៃសមរម្យ។</p>
       <div class="stats">
         <div><h3>500+</h3><p>Products</p></div>
         <div><h3>10K+</h3><p>Customers</p></div>
@@ -164,6 +203,10 @@
             <input type="email" id="regEmail" required placeholder="your@email.com" />
           </div>
           <div class="input-group">
+            <label>Phone Number</label>
+            <input type="tel" id="regPhone" placeholder="+855 12 345 6789" />
+          </div>
+          <div class="input-group">
             <label>Password</label>
             <input type="password" id="regPassword" required minlength="6" placeholder="At least 6 characters" />
           </div>
@@ -172,6 +215,94 @@
             មានគណនីរួចហើយ? <a href="#" onclick="showPage('login')">Login</a>
           </p>
         </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILE PAGE -->
+  <section id="profile" class="page">
+    <div class="container">
+      <h2 class="section-title"><i class="fas fa-user-circle"></i> My Profile</h2>
+      <div class="profile-container">
+        <div class="profile-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <form id="profileForm">
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="profileNameInput" required />
+          </div>
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="profileEmailInput" required />
+          </div>
+          <div class="input-group">
+            <label>Phone Number</label>
+            <input type="tel" id="profilePhoneInput" />
+          </div>
+          <button type="submit" class="btn-primary btn-full">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </form>
+        
+        <div class="profile-actions">
+          <button class="btn-secondary" onclick="showChangePassword()">
+            <i class="fas fa-key"></i> Change Password
+          </button>
+          <button class="btn-secondary" onclick="showChangeEmail()">
+            <i class="fas fa-envelope"></i> Change Email
+          </button>
+        </div>
+      </div>
+      
+      <!-- Change Password Modal -->
+      <div class="modal" id="changePasswordModal">
+        <div class="modal-content">
+          <h3><i class="fas fa-key"></i> Change Password</h3>
+          <form id="changePasswordForm">
+            <div class="input-group">
+              <label>Current Password</label>
+              <input type="password" id="currentPassword" required />
+            </div>
+            <div class="input-group">
+              <label>New Password</label>
+              <input type="password" id="newPassword" required minlength="6" />
+            </div>
+            <div class="input-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="confirmPassword" required minlength="6" />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeModal('changePasswordModal')">Cancel</button>
+              <button type="submit" class="btn-primary">Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Change Email Modal -->
+      <div class="modal" id="changeEmailModal">
+        <div class="modal-content">
+          <h3><i class="fas fa-envelope"></i> Change Email</h3>
+          <form id="changeEmailForm">
+            <div class="input-group">
+              <label>Current Email</label>
+              <input type="email" id="currentEmail" readonly />
+            </div>
+            <div class="input-group">
+              <label>New Email</label>
+              <input type="email" id="newEmail" required />
+            </div>
+            <div class="input-group">
+              <label>Password</label>
+              <input type="password" id="emailPassword" required />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeModal('changeEmailModal')">Cancel</button>
+              <button type="submit" class="btn-primary">Update Email</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </section>
@@ -245,10 +376,101 @@
     </div>
   </section>
 
+  <!-- ADMIN PANEL -->
+  <section id="admin" class="page">
+    <div class="container">
+      <div class="admin-header">
+        <h2><i class="fas fa-cog"></i> Admin Panel</h2>
+        <button class="btn-primary" onclick="showAddProductModal()">
+          <i class="fas fa-plus"></i> Add Product
+        </button>
+      </div>
+      
+      <div class="admin-stats">
+        <div class="admin-stat-card">
+          <i class="fas fa-box"></i>
+          <h3 id="adminTotalProducts">0</h3>
+          <p>Total Products</p>
+        </div>
+        <div class="admin-stat-card">
+          <i class="fas fa-users"></i>
+          <h3 id="adminTotalUsers">0</h3>
+          <p>Total Users</p>
+        </div>
+        <div class="admin-stat-card">
+          <i class="fas fa-dollar-sign"></i>
+          <h3 id="adminTotalRevenue">$0</h3>
+          <p>Total Revenue</p>
+        </div>
+      </div>
+      
+      <h3 class="section-title">📦 Manage Products</h3>
+      <div class="admin-products-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Vendor</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminProductsList"></tbody>
+        </table>
+      </div>
+      
+      <!-- Add/Edit Product Modal -->
+      <div class="modal" id="productModal">
+        <div class="modal-content">
+          <h3 id="productModalTitle"><i class="fas fa-plus"></i> Add Product</h3>
+          <form id="productForm">
+            <input type="hidden" id="productId" />
+            <div class="input-group">
+              <label>Product Title</label>
+              <input type="text" id="productTitle" required />
+            </div>
+            <div class="input-group">
+              <label>Category</label>
+              <select id="productCategory" required>
+                <option value="script">Script</option>
+                <option value="plugin">Plugin</option>
+                <option value="template">Template</option>
+                <option value="ui">UI Kit</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Price (USD)</label>
+              <input type="number" id="productPrice" required min="0" step="0.01" />
+            </div>
+            <div class="input-group">
+              <label>Vendor</label>
+              <input type="text" id="productVendor" required />
+            </div>
+            <div class="input-group">
+              <label>Description</label>
+              <textarea id="productDesc" required></textarea>
+            </div>
+            <div class="input-group">
+              <label>Icon (FontAwesome class)</label>
+              <input type="text" id="productIcon" placeholder="fa-code" value="fa-code" />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" onclick="closeModal('productModal')">Cancel</button>
+              <button type="submit" class="btn-primary">Save Product</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer>
     <div class="container">
       <p>&copy; 2026 AhnajakCode. All rights reserved. Made with ❤️ in Cambodia</p>
+      <p><a href="https://ahnajak.vercel.app/admin_panel" target="_blank">Admin Panel</a></p>
     </div>
   </footer>
 
@@ -257,4 +479,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+  </html>
