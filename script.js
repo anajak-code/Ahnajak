@@ -1,17 +1,16 @@
-// ============ DATA ============
+// ============================================
+// CONFIGURATION
+// ============================================
+const PAYMENT_API_URL = 'https://your-tunnel-url.trycloudflare.com'; // ប្តូរទៅ URL របស់អ្នក
+
+// ============================================
+// DATA
+// ============================================
 let PRODUCTS = JSON.parse(localStorage.getItem('products')) || [
   { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសម្រាប់ហាងអនឡាញ", vendor: "DevMaster" },
   { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សម្រាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
   { id: 3, title: "Portfolio Template", category: "template", price: 19, icon: "fa-briefcase", desc: "Template ស្អាតសម្រាប់ Portfolio", vendor: "TemplateHub" },
-  { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" },
-  { id: 5, title: "Chat App Script", category: "script", price: 59, icon: "fa-comments", desc: "Real-time chat application", vendor: "DevMaster" },
-  { id: 6, title: "Payment Gateway Plugin", category: "plugin", price: 35, icon: "fa-credit-card", desc: "ភ្ជាប់ ABA/Stripe ទៅវេបសាយ", vendor: "PluginPro" },
-  { id: 7, title: "Blog Template", category: "template", price: 15, icon: "fa-blog", desc: "Template សម្រាប់ Blog ស្អាតៗ", vendor: "TemplateHub" },
-  { id: 8, title: "Mobile App UI Kit", category: "ui", price: 45, icon: "fa-mobile-alt", desc: "UI Kit សម្រាប់ Mobile App", vendor: "UIDesign" },
-  { id: 9, title: "Booking System Script", category: "script", price: 69, icon: "fa-calendar-check", desc: "ប្រព័ន្ធកក់ទុកសម្រាប់សេវាកម្ម", vendor: "DevMaster" },
-  { id: 10, title: "Security Plugin", category: "plugin", price: 25, icon: "fa-shield-alt", desc: "ការពារវេបសាយពី Hackers", vendor: "PluginPro" },
-  { id: 11, title: "Landing Page Template", category: "template", price: 22, icon: "fa-rocket", desc: "Template សម្រាប់ Landing Page", vendor: "TemplateHub" },
-  { id: 12, title: "Icon Pack UI", category: "ui", price: 12, icon: "fa-icons", desc: "5000+ Icons សម្រាប់ Design", vendor: "UIDesign" }
+  { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" }
 ];
 
 const COUPONS = {
@@ -23,14 +22,18 @@ const COUPONS = {
 const CURRENCY_RATES = { USD: 1, KHR: 4100, THB: 35, EUR: 0.92 };
 const CURRENCY_SYMBOLS = { USD: '$', KHR: '៛', THB: '฿', EUR: '€' };
 
-// ============ STATE ============
+// ============================================
+// STATE
+// ============================================
 let currentUser = JSON.parse(localStorage.getItem('current_user')) || null;
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentCurrency = localStorage.getItem('currency') || 'USD';
 let currentTheme = localStorage.getItem('theme') || 'dark';
 let appliedCoupon = null;
 
-// ============ INIT ============
+// ============================================
+// INIT
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('currencySelect').value = currentCurrency;
   document.documentElement.setAttribute('data-theme', currentTheme);
@@ -42,21 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
     trackAffiliateClick(ref);
   }
   
-  // Check if admin
-  if (currentUser && currentUser.role === 'admin') {
-    document.getElementById('sidebarAuth').innerHTML = `
-      <a href="#" onclick="showPage('admin'); toggleSidebar();"><i class="fas fa-cog"></i> Admin Panel</a>
-      <a href="#" onclick="showPage('profile'); toggleSidebar();"><i class="fas fa-user"></i> My Profile</a>
-      <a href="#" onclick="logout(); toggleSidebar();"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    `;
-  }
-  
   renderFeatured();
   updateCartCount();
   updateAuthUI();
 });
 
-// ============ THEME TOGGLE ============
+// ============================================
+// THEME TOGGLE
+// ============================================
 function toggleTheme() {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
@@ -69,7 +65,9 @@ function updateThemeIcon() {
   icon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
 }
 
-// ============ CURRENCY ============
+// ============================================
+// CURRENCY
+// ============================================
 function changeCurrency() {
   currentCurrency = document.getElementById('currencySelect').value;
   localStorage.setItem('currency', currentCurrency);
@@ -89,18 +87,21 @@ function formatPrice(priceUSD) {
   return symbol + converted.toFixed(2);
 }
 
-// ============ SIDEBAR ============
+// ============================================
+// SIDEBAR
+// ============================================
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('sidebarOverlay').classList.toggle('active');
 }
 
-// ============ PROFILE DROPDOWN ============
+// ============================================
+// PROFILE DROPDOWN
+// ============================================
 function toggleProfileDropdown() {
   document.getElementById('profileDropdown').classList.toggle('active');
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
   const dropdown = document.getElementById('profileDropdown');
   const profileIcon = document.querySelector('.profile-icon');
@@ -110,7 +111,9 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ============ PAGE NAVIGATION ============
+// ============================================
+// PAGE NAVIGATION
+// ============================================
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
@@ -124,10 +127,11 @@ function showPage(pageId) {
   if (pageId === 'dashboard') renderDashboard();
   if (pageId === 'products') renderAllProducts('all');
   if (pageId === 'profile') renderProfile();
-  if (pageId === 'admin') renderAdmin();
 }
 
-// ============ AUTH ============
+// ============================================
+// AUTH
+// ============================================
 document.getElementById('registerForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const name = document.getElementById('regName').value.trim();
@@ -181,12 +185,7 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   localStorage.setItem('current_user', JSON.stringify(user));
   updateAuthUI();
   showToast('✅ Login ជោគជ័យ! សូមស្វាគមន៍ ' + user.name);
-  
-  if (user.role === 'admin') {
-    showPage('admin');
-  } else {
-    showPage('dashboard');
-  }
+  showPage('dashboard');
   e.target.reset();
 });
 
@@ -208,29 +207,16 @@ function updateAuthUI() {
     profileName.textContent = currentUser.name;
     profileEmail.textContent = currentUser.email;
     
-    if (currentUser.role === 'admin') {
-      sidebarAuth.innerHTML = `
-        <a href="#" onclick="showPage('admin'); toggleSidebar();"><i class="fas fa-cog"></i> Admin Panel</a>
-        <a href="#" onclick="showPage('profile'); toggleSidebar();"><i class="fas fa-user"></i> My Profile</a>
-        <a href="#" onclick="logout(); toggleSidebar();"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      `;
-      profileAuth.innerHTML = `
-        <a href="#" onclick="showPage('admin'); toggleProfileDropdown();"><i class="fas fa-cog"></i> Admin Panel</a>
-        <a href="#" onclick="showPage('profile'); toggleProfileDropdown();"><i class="fas fa-user"></i> My Profile</a>
-        <a href="#" onclick="logout(); toggleProfileDropdown();"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      `;
-    } else {
-      sidebarAuth.innerHTML = `
-        <a href="#" onclick="showPage('profile'); toggleSidebar();"><i class="fas fa-user"></i> My Profile</a>
-        <a href="#" onclick="showPage('dashboard'); toggleSidebar();"><i class="fas fa-box"></i> My Purchases</a>
-        <a href="#" onclick="logout(); toggleSidebar();"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      `;
-      profileAuth.innerHTML = `
-        <a href="#" onclick="showPage('profile'); toggleProfileDropdown();"><i class="fas fa-user"></i> My Profile</a>
-        <a href="#" onclick="showPage('dashboard'); toggleProfileDropdown();"><i class="fas fa-box"></i> My Purchases</a>
-        <a href="#" onclick="logout(); toggleProfileDropdown();"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      `;
-    }
+    sidebarAuth.innerHTML = `
+      <a href="#" onclick="showPage('profile'); toggleSidebar();"><i class="fas fa-user"></i> My Profile</a>
+      <a href="#" onclick="showPage('dashboard'); toggleSidebar();"><i class="fas fa-box"></i> My Purchases</a>
+      <a href="#" onclick="logout(); toggleSidebar();"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    `;
+    profileAuth.innerHTML = `
+      <a href="#" onclick="showPage('profile'); toggleProfileDropdown();"><i class="fas fa-user"></i> My Profile</a>
+      <a href="#" onclick="showPage('dashboard'); toggleProfileDropdown();"><i class="fas fa-box"></i> My Purchases</a>
+      <a href="#" onclick="logout(); toggleProfileDropdown();"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    `;
   } else {
     profileName.textContent = 'Guest';
     profileEmail.textContent = 'Please login';
@@ -239,7 +225,9 @@ function updateAuthUI() {
   }
 }
 
-// ============ PROFILE ============
+// ============================================
+// PROFILE
+// ============================================
 function renderProfile() {
   if (!currentUser) {
     showPage('login');
@@ -347,7 +335,9 @@ document.getElementById('changeEmailForm').addEventListener('submit', (e) => {
   e.target.reset();
 });
 
-// ============ PRODUCTS ============
+// ============================================
+// PRODUCTS
+// ============================================
 function renderProducts(containerId, products) {
   const container = document.getElementById(containerId);
   if (!products.length) {
@@ -400,7 +390,9 @@ function searchProducts() {
   renderProducts('allProducts', filtered);
 }
 
-// ============ CART ============
+// ============================================
+// CART
+// ============================================
 function addToCart(productId) {
   if (!currentUser) {
     showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
@@ -497,13 +489,21 @@ function applyCoupon() {
   showToast('✅ បានប្រើកូដបញ្ចុះតម្លៃ!');
 }
 
+// ============================================
+// CHECKOUT & PAYMENT
+// ============================================
 function checkout() {
   if (!currentUser) {
     showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
+    showPage('login');
     return;
   }
-  if (!cart.length) return;
-
+  
+  if (!cart.length) {
+    showToast('⚠️ Cart របស់អ្នកទទេ!', 'error');
+    return;
+  }
+  
   const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
   let discount = 0;
   
@@ -514,34 +514,194 @@ function checkout() {
   }
   
   const total = subtotal - discount;
+  
+  createOrderWithBakong(total);
+}
 
+async function createOrderWithBakong(totalAmount) {
+  try {
+    showToast('⏳ កំពុងបង្កើត Order...');
+    
+    const firstProduct = cart[0];
+    
+    const response = await fetch(`${PAYMENT_API_URL}/api/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        player_name: currentUser.email,
+        item_type: 'product',
+        item_id: firstProduct.id
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      showPaymentModal(data);
+      startPaymentMonitoring(data.transaction_id, data.order_id);
+    } else {
+      showToast('❌ ' + (data.message || 'Failed to create order'), 'error');
+    }
+    
+  } catch (error) {
+    console.error('Payment error:', error);
+    showToast('❌ Connection error. Please try again.', 'error');
+  }
+}
+
+function showPaymentModal(paymentData) {
+  document.getElementById('paymentModal').classList.add('active');
+  document.getElementById('paymentOrderId').textContent = paymentData.order_id;
+  document.getElementById('paymentAmountUSD').textContent = '$' + paymentData.price_usd.toFixed(2);
+  document.getElementById('paymentAmountKHR').textContent = '៛' + paymentData.price_khr.toLocaleString();
+  
+  generateQRCode(paymentData.khqr_string);
+  startPaymentTimer(600);
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentModal').classList.remove('active');
+  if (paymentCheckInterval) {
+    clearInterval(paymentCheckInterval);
+  }
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+}
+
+function generateQRCode(qrString) {
+  const canvas = document.getElementById('qrCanvas');
+  QRCode.toCanvas(canvas, qrString, {
+    width: 200,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#ffffff'
+    }
+  });
+}
+
+let paymentCheckInterval = null;
+
+function startPaymentMonitoring(transactionId, orderId) {
+  let checkCount = 0;
+  const maxChecks = 120;
+  
+  paymentCheckInterval = setInterval(async () => {
+    checkCount++;
+    
+    try {
+      const response = await fetch(`${PAYMENT_API_URL}/api/check-status/${transactionId}`);
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.order_status === 'paid') {
+        clearInterval(paymentCheckInterval);
+        clearInterval(timerInterval);
+        
+        document.getElementById('paymentStatus').innerHTML = `
+          <div class="status-success">
+            <i class="fas fa-check-circle"></i>
+            <p>Payment Verified!</p>
+          </div>
+        `;
+        
+        savePurchasesToUser();
+        
+        setTimeout(() => {
+          closePaymentModal();
+          showSuccessModal(orderId);
+        }, 2000);
+        
+      } else if (checkCount >= maxChecks) {
+        clearInterval(paymentCheckInterval);
+        clearInterval(timerInterval);
+        
+        document.getElementById('paymentStatus').innerHTML = `
+          <div class="status-pending" style="color: var(--danger);">
+            <i class="fas fa-times-circle"></i>
+            <p>Payment expired</p>
+          </div>
+        `;
+        
+        setTimeout(() => {
+          closePaymentModal();
+          showToast('⏰ Payment expired. Please try again.', 'error');
+        }, 3000);
+      }
+      
+    } catch (error) {
+      console.error('Check status error:', error);
+    }
+    
+  }, 5000);
+}
+
+let timerInterval = null;
+
+function startPaymentTimer(seconds) {
+  let remaining = seconds;
+  
+  timerInterval = setInterval(() => {
+    remaining--;
+    
+    const minutes = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    
+    document.getElementById('paymentTimer').textContent = 
+      `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+    }
+  }, 1000);
+}
+
+function savePurchasesToUser() {
   const users = JSON.parse(localStorage.getItem('users')) || [];
   const userIndex = users.findIndex(u => u.email === currentUser.email);
-  if (!users[userIndex].purchases) users[userIndex].purchases = [];
-  users[userIndex].purchases.push(...cart);
-  localStorage.setItem('users', JSON.stringify(users));
-  currentUser = users[userIndex];
-  localStorage.setItem('current_user', JSON.stringify(currentUser));
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const ref = urlParams.get('ref');
-  if (ref) {
-    const affiliateUser = users.find(u => u.affiliateCode === ref);
-    if (affiliateUser) {
-      affiliateUser.affiliateEarnings += total * 0.10;
-      localStorage.setItem('users', JSON.stringify(users));
+  
+  if (userIndex !== -1) {
+    if (!users[userIndex].purchases) {
+      users[userIndex].purchases = [];
     }
+    users[userIndex].purchases.push(...cart);
+    
+    localStorage.setItem('users', JSON.stringify(users));
+    currentUser = users[userIndex];
+    localStorage.setItem('current_user', JSON.stringify(currentUser));
   }
-
-  showToast(`🎉 ទូទាត់ជោគជ័យ! អ្នកបានទិញ ${cart.length} ផលិតផល`);
+  
   cart = [];
   appliedCoupon = null;
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
+}
+
+function showSuccessModal(orderId) {
+  document.getElementById('successModal').classList.add('active');
+  
+  document.getElementById('successDetails').innerHTML = `
+    <div class="info-row">
+      <span>Order ID:</span>
+      <strong>${orderId}</strong>
+    </div>
+    <div class="info-row">
+      <span>Items:</span>
+      <strong>${currentUser.purchases.length} products</strong>
+    </div>
+  `;
+}
+
+function closeSuccessModal() {
+  document.getElementById('successModal').classList.remove('active');
   showPage('dashboard');
 }
 
-// ============ AFFILIATE ============
+// ============================================
+// AFFILIATE
+// ============================================
 function generateAffiliateCode() {
   return 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
 }
@@ -562,7 +722,9 @@ function trackAffiliateClick(refCode) {
   }
 }
 
-// ============ DASHBOARD ============
+// ============================================
+// DASHBOARD
+// ============================================
 function renderDashboard() {
   if (!currentUser) {
     showPage('login');
@@ -601,140 +763,12 @@ function downloadProduct(title) {
   showToast(`⬇️ កំពុងទាញយក: ${title}`);
 }
 
-// ============ ADMIN PANEL ============
-function renderAdmin() {
-  if (!currentUser || currentUser.role !== 'admin') {
-    showToast('⚠️ Access denied! Admin only.', 'error');
-    showPage('home');
-    return;
-  }
-  
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const totalRevenue = users.reduce((sum, u) => {
-    const purchases = u.purchases || [];
-    return sum + purchases.reduce((s, p) => s + p.price, 0);
-  }, 0);
-  
-  document.getElementById('adminTotalProducts').textContent = PRODUCTS.length;
-  document.getElementById('adminTotalUsers').textContent = users.length;
-  document.getElementById('adminTotalRevenue').textContent = formatPrice(totalRevenue);
-  
-  renderAdminProducts();
-}
-
-function renderAdminProducts() {
-  const tbody = document.getElementById('adminProductsList');
-  tbody.innerHTML = PRODUCTS.map(p => `
-    <tr>
-      <td>${p.id}</td>
-      <td>${p.title}</td>
-      <td><span class="product-category">${p.category}</span></td>
-      <td>${formatPrice(p.price)}</td>
-      <td>${p.vendor}</td>
-      <td>
-        <div class="action-btns">
-          <button class="btn-edit" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn-delete" onclick="deleteProduct(${p.id})"><i class="fas fa-trash"></i> Delete</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function showAddProductModal() {
-  document.getElementById('productModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Product';
-  document.getElementById('productForm').reset();
-  document.getElementById('productId').value = '';
-  document.getElementById('productModal').classList.add('active');
-}
-
-function editProduct(id) {
-  const product = PRODUCTS.find(p => p.id === id);
-  if (!product) return;
-  
-  document.getElementById('productModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Product';
-  document.getElementById('productId').value = product.id;
-  document.getElementById('productTitle').value = product.title;
-  document.getElementById('productCategory').value = product.category;
-  document.getElementById('productPrice').value = product.price;
-  document.getElementById('productVendor').value = product.vendor;
-  document.getElementById('productDesc').value = product.desc;
-  document.getElementById('productIcon').value = product.icon;
-  
-  document.getElementById('productModal').classList.add('active');
-}
-
-function deleteProduct(id) {
-  if (!confirm('Are you sure you want to delete this product?')) return;
-  
-  PRODUCTS = PRODUCTS.filter(p => p.id !== id);
-  localStorage.setItem('products', JSON.stringify(PRODUCTS));
-  renderAdminProducts();
-  renderFeatured();
-  renderAllProducts('all');
-  showToast('✅ Product deleted successfully!');
-}
-
-document.getElementById('productForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  
-  const id = document.getElementById('productId').value;
-  const productData = {
-    title: document.getElementById('productTitle').value.trim(),
-    category: document.getElementById('productCategory').value,
-    price: parseFloat(document.getElementById('productPrice').value),
-    vendor: document.getElementById('productVendor').value.trim(),
-    desc: document.getElementById('productDesc').value.trim(),
-    icon: document.getElementById('productIcon').value.trim() || 'fa-code'
-  };
-  
-  if (id) {
-    // Edit existing
-    const index = PRODUCTS.findIndex(p => p.id === parseInt(id));
-    if (index !== -1) {
-      PRODUCTS[index] = { ...PRODUCTS[index], ...productData };
-    }
-  } else {
-    // Add new
-    const newProduct = {
-      id: Date.now(),
-      ...productData
-    };
-    PRODUCTS.push(newProduct);
-  }
-  
-  localStorage.setItem('products', JSON.stringify(PRODUCTS));
-  closeModal('productModal');
-  renderAdminProducts();
-  renderFeatured();
-  renderAllProducts('all');
-  showToast(id ? '✅ Product updated successfully!' : '✅ Product added successfully!');
-});
-
-// ============ TOAST ============
+// ============================================
+// TOAST
+// ============================================
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.className = 'toast show' + (type === 'error' ? ' error' : '');
   setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-// Create admin account (run once in console)
-function createAdminAccount() {
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const admin = {
-    id: 1,
-    name: 'Admin',
-    email: 'admin@ahnajakcode.com',
-    phone: '+855 12 345 678',
-    password: 'admin123',
-    purchases: [],
-    affiliateCode: 'ADMIN001',
-    affiliateClicks: 0,
-    affiliateEarnings: 0,
-    role: 'admin'
-  };
-  users.push(admin);
-  localStorage.setItem('users', JSON.stringify(users));
-  console.log('Admin account created! Email: admin@ahnajakcode.com, Password: admin123');
-                                    }
+      }
