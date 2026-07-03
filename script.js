@@ -1,7 +1,7 @@
 // ============================================
 // CONFIGURATION
 // ============================================
-const PAYMENT_API_URL = 'https://your-tunnel-url.trycloudflare.com'; // ប្តូរទៅ URL របស់អ្នក
+const PAYMENT_API_URL = 'https://backend-11zq.onrender.com'; // ប្តូរទៅ URL របស់អ្នក
 
 // ============================================
 // DATA
