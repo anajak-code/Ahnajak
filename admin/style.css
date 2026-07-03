@@ -42,6 +42,10 @@ body {
     color: white;
 }
 
+.admin-header h1 i {
+    margin-right: 10px;
+}
+
 .view-site-btn {
     background: rgba(255, 255, 255, 0.2);
     color: white;
@@ -62,6 +66,7 @@ body {
     padding: 0 20px;
 }
 
+/* Card */
 .card {
     background: var(--bg-card);
     padding: 25px;
@@ -78,6 +83,13 @@ body {
 
 .card h2 i {
     margin-right: 10px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 /* Form */
@@ -312,6 +324,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background 0.3s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .modal-content form {
@@ -370,5 +387,23 @@ body {
         right: 20px;
         bottom: 20px;
         text-align: center;
+    }
+    
+    .products-table {
+        min-width: 500px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .card {
+        padding: 20px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 12px 20px;
     }
 }
