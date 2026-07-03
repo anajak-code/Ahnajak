@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="km" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#6366f1" />
+  <title>AhnajakCode - Script, Plugins & Digital Products</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="logo" onclick="showPage('home')">
+        <i class="fas fa-code"></i> Ahnajak<span>Code</span>
+      </a>
+      
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#" onclick="showPage('home')">Home</a></li>
+        <li><a href="#" onclick="showPage('products')">Products</a></li>
+        <li><a href="#" onclick="showPage('about')">About</a></li>
+        
+        <!-- Currency Selector -->
+        <li class="currency-selector">
+          <select id="currencySelect" onchange="changeCurrency()">
+            <option value="USD">💵 USD</option>
+            <option value="KHR">🇰🇭 KHR</option>
+            <option value="THB">🇹🇭 THB</option>
+            <option value="EUR">🇪🇺 EUR</option>
+          </select>
+        </li>
+        
+        <!-- Theme Toggle -->
+        <li>
+          <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </button>
+        </li>
+        
+        <li class="cart-icon" onclick="showPage('cart')">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </li>
+        
+        <li id="authNav">
+          <a href="#" onclick="showPage('login')" class="btn-login">Login</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HOME PAGE -->
+  <section id="home" class="page active">
+    <div class="hero">
+      <div class="hero-content">
+        <h1>Welcome to <span>AhnajakCode</span></h1>
+        <p>ទិញ Script, Plugins, Templates និង Digital Products គុណភាពខ្ពស់ សម្រាប់ Developer កម្ពុជា និងអន្តរជាតិ។</p>
+        <button class="btn-primary" onclick="showPage('products')">
+          <i class="fas fa-rocket"></i> Browse Products
+        </button>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2 class="section-title">🔥 Featured Products</h2>
+      <div class="products-grid" id="featuredProducts"></div>
+    </div>
+
+    <div class="container features">
+      <div class="feature-box">
+        <i class="fas fa-bolt"></i>
+        <h3>Fast Delivery</h3>
+        <p>ទាញយកភ្លាមៗ បន្ទាប់ពីទូទាត់ប្រាក់រួច។</p>
+      </div>
+      <div class="feature-box">
+        <i class="fas fa-shield-alt"></i>
+        <h3>Secure Payment</h3>
+        <p>ប្រព័ន្ធទូទាត់មានសុវត្ថិភាព 100%។</p>
+      </div>
+      <div class="feature-box">
+        <i class="fas fa-headset"></i>
+        <h3>24/7 Support</h3>
+        <p>ជំនួយបច្ចេកទេសគ្រប់ពេលវេលា។</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS PAGE -->
+  <section id="products" class="page">
+    <div class="container">
+      <h2 class="section-title">🛒 All Products</h2>
+      
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search products..." oninput="searchProducts()" />
+      </div>
+      
+      <div class="filter-bar">
+        <button class="filter-btn active" data-cat="all">All</button>
+        <button class="filter-btn" data-cat="script">Scripts</button>
+        <button class="filter-btn" data-cat="plugin">Plugins</button>
+        <button class="filter-btn" data-cat="template">Templates</button>
+        <button class="filter-btn" data-cat="ui">UI Kits</button>
+      </div>
+      <div class="products-grid" id="allProducts"></div>
+    </div>
+  </section>
+
+  <!-- ABOUT PAGE -->
+  <section id="about" class="page">
+    <div class="container about-content">
+      <h2 class="section-title">About AhnajakCode</h2>
+      <p>AhnajakCode គឺជាវេបសាយលក់ Digital Products ដែលផ្តល់ជូននូវ Script, Plugin, Template និង UI Kit គុណភាពខ្ពស់។</p>
+      <div class="stats">
+        <div><h3>500+</h3><p>Products</p></div>
+        <div><h3>10K+</h3><p>Customers</p></div>
+        <div><h3>24/7</h3><p>Support</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGIN PAGE -->
+  <section id="login" class="page">
+    <div class="auth-container">
+      <div class="auth-box">
+        <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+        <form id="loginForm">
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" required placeholder="your@email.com" />
+          </div>
+          <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••" />
+          </div>
+          <button type="submit" class="btn-primary btn-full">Login</button>
+          <p class="auth-switch">
+            មិនទាន់មានគណនី? <a href="#" onclick="showPage('register')">Register</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTER PAGE -->
+  <section id="register" class="page">
+    <div class="auth-container">
+      <div class="auth-box">
+        <h2><i class="fas fa-user-plus"></i> Register</h2>
+        <form id="registerForm">
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="regName" required placeholder="John Doe" />
+          </div>
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="regEmail" required placeholder="your@email.com" />
+          </div>
+          <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="regPassword" required minlength="6" placeholder="At least 6 characters" />
+          </div>
+          <button type="submit" class="btn-primary btn-full">Create Account</button>
+          <p class="auth-switch">
+            មានគណនីរួចហើយ? <a href="#" onclick="showPage('login')">Login</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- CART PAGE -->
+  <section id="cart" class="page">
+    <div class="container">
+      <h2 class="section-title">🛍️ Your Cart</h2>
+      
+      <!-- Coupon Input -->
+      <div class="coupon-section">
+        <input type="text" id="couponInput" placeholder="Enter coupon code" />
+        <button class="btn-small" onclick="applyCoupon()">Apply</button>
+      </div>
+      
+      <div id="cartItems"></div>
+      <div class="cart-summary" id="cartSummary" style="display:none;">
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span id="cartSubtotal">$0.00</span>
+        </div>
+        <div class="summary-row discount-row" id="discountRow" style="display:none;">
+          <span>Discount:</span>
+          <span id="cartDiscount" class="discount-amount">-$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Total:</span>
+          <span class="total-price" id="cartTotal">$0.00</span>
+        </div>
+        <button class="btn-primary btn-full" onclick="checkout()">
+          <i class="fas fa-credit-card"></i> Checkout Now
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- USER DASHBOARD -->
+  <section id="dashboard" class="page">
+    <div class="container">
+      <div class="dashboard-header">
+        <h2>Welcome, <span id="userName"></span> 👋</h2>
+        <button class="btn-danger" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+      
+      <!-- Affiliate Section -->
+      <div class="affiliate-section">
+        <h3><i class="fas fa-handshake"></i> Affiliate Program</h3>
+        <p>ចែករំលែក Link របស់អ្នក ហើយទទួលបាន 10% commission!</p>
+        <div class="affiliate-link-box">
+          <input type="text" id="affiliateLink" readonly />
+          <button class="btn-small" onclick="copyAffiliateLink()">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="affiliate-stats">
+          <div>
+            <h4 id="affiliateClicks">0</h4>
+            <p>Clicks</p>
+          </div>
+          <div>
+            <h4 id="affiliateEarnings">$0.00</h4>
+            <p>Earnings</p>
+          </div>
+        </div>
+      </div>
+      
+      <h3 class="section-title">📦 My Purchases</h3>
+      <div class="products-grid" id="myPurchases"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 AhnajakCode. All rights reserved. Made with ❤️ in Cambodia</p>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
