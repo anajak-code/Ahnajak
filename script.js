@@ -3,15 +3,16 @@
 // ============================================
 const SHARE_BASE_URL = 'https://www.forestsmp.site';
 const SHARE_STORAGE_KEY = 'share_clicked_devices';
+const PAYMENT_API_URL = 'https://backend-11zq.onrender.com';
 
 // ============================================
 // DATA
 // ============================================
 let PRODUCTS = JSON.parse(localStorage.getItem('products')) || [
-  { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសម្រាប់ហាងអនឡាញ", vendor: "DevMaster" },
-  { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សម្រាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
-  { id: 3, title: "Portfolio Template", category: "template", price: 19, icon: "fa-briefcase", desc: "Template ស្អាតសម្រាប់ Portfolio", vendor: "TemplateHub" },
-  { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" }
+  { id: 1, title: "E-commerce Script", category: "script", price: 49, image: "", icon: "fa-shopping-cart", desc: "Script ពេញលេញសម្រាប់ហាងអនឡាញ", vendor: "DevMaster", downloads: 12 },
+  { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, image: "", icon: "fa-plug", desc: "Plugin សម្រាប់បង្ើន SEO", vendor: "PluginPro", downloads: 8 },
+  { id: 3, title: "Portfolio Template", category: "template", price: 19, image: "", icon: "fa-briefcase", desc: "Template ស្អាតសម្រាប់ Portfolio", vendor: "TemplateHub", downloads: 15 },
+  { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, image: "", icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign", downloads: 6 }
 ];
 
 const COUPONS = {
@@ -36,32 +37,50 @@ let appliedCoupon = null;
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Load currency
   const currencySelect = document.getElementById('currencySelect');
   if (currencySelect) currencySelect.value = currentCurrency;
   
+  // Load theme
   document.documentElement.setAttribute('data-theme', currentTheme);
   updateThemeIcon();
   
+  // Check affiliate ref
   const urlParams = new URLSearchParams(window.location.search);
   const ref = urlParams.get('ref');
   if (ref) {
     trackAffiliateClick(ref);
   }
   
+  // Initial render
   renderFeatured();
+  renderAllProducts('all');
   updateCartCount();
   updateAuthUI();
+  updateShareButtonState();
 });
 
-// Listen for storage changes
+// Listen for storage changes (when admin adds products)
 window.addEventListener('storage', (e) => {
   if (e.key === 'products') {
     PRODUCTS = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
     renderFeatured();
     renderAllProducts('all');
   }
+  if (e.key === 'users') {
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    if (currentUser) {
+      const updatedUser = users.find(u => u.email === currentUser.email);
+      if (updatedUser) {
+        currentUser = updatedUser;
+        localStorage.setItem('current_user', JSON.stringify(currentUser));
+        updateAuthUI();
+      }
+    }
+  }
 });
 
+// Refresh products when page gains focus
 window.addEventListener('focus', () => {
   PRODUCTS = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
   renderFeatured();
@@ -92,6 +111,7 @@ function changeCurrency() {
   renderFeatured();
   renderAllProducts('all');
   renderCart();
+  if (currentUser) renderDashboard();
 }
 
 function formatPrice(priceUSD) {
@@ -168,7 +188,8 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     affiliateCode: generateAffiliateCode(),
     affiliateClicks: 0,
     affiliateEarnings: 0,
-    role: 'user'
+    role: 'user',
+    joined: new Date().toLocaleDateString()
   };
   users.push(newUser);
   localStorage.setItem('users', JSON.stringify(users));
@@ -176,7 +197,8 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
   currentUser = newUser;
 
   updateAuthUI();
-  showToast('🎉 Register ជោគជ័យ! សូមស្វាគមន៍ ' + name);
+  updateShareButtonState();
+  showToast('🎉 Register ជោគជ័យ! សូមស្វាគមន ' + name);
   showPage('dashboard');
   e.target.reset();
 });
@@ -190,14 +212,15 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   const user = users.find(u => u.email === email && u.password === password);
 
   if (!user) {
-    showToast('Email ឬ Password មិនត្រឹមត្រូវ!', 'error');
+    showToast('Email ឬ Password មិនត្រឹមតរូវ!', 'error');
     return;
   }
 
   currentUser = user;
   localStorage.setItem('current_user', JSON.stringify(user));
   updateAuthUI();
-  showToast('✅ Login ជោគជ័យ! សូមស្វាគមន៍ ' + user.name);
+  updateShareButtonState();
+  showToast('✅ Login ជោគជ័យ! សូមស្វាគមន ' + user.name);
   showPage('dashboard');
   e.target.reset();
 });
@@ -206,7 +229,8 @@ function logout() {
   currentUser = null;
   localStorage.removeItem('current_user');
   updateAuthUI();
-  showToast('👋 បាន Logout ដោយជោគជ័យ');
+  updateShareButtonState();
+  showToast(' បាន Logout ដោយជោគជ័យ');
   showPage('home');
 }
 
@@ -215,16 +239,10 @@ function updateAuthUI() {
   const profileName = document.getElementById('profileName');
   const profileEmail = document.getElementById('profileEmail');
   const profileAuth = document.getElementById('profileAuth');
-  const shareMenuItem = document.getElementById('shareMenuItem');
   
   if (currentUser) {
     if (profileName) profileName.textContent = currentUser.name;
     if (profileEmail) profileEmail.textContent = currentUser.email;
-    
-    if (shareMenuItem) {
-      shareMenuItem.style.display = 'block';
-      updateShareButtonState();
-    }
     
     if (sidebarAuth) {
       sidebarAuth.innerHTML = `
@@ -243,7 +261,6 @@ function updateAuthUI() {
   } else {
     if (profileName) profileName.textContent = 'Guest';
     if (profileEmail) profileEmail.textContent = 'Please login';
-    if (shareMenuItem) shareMenuItem.style.display = 'none';
     if (sidebarAuth) {
       sidebarAuth.innerHTML = `<a href="#" onclick="showPage('login'); toggleSidebar();"><i class="fas fa-sign-in-alt"></i> Login</a>`;
     }
@@ -295,23 +312,32 @@ function renderProducts(containerId, products) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;">No products found</p>';
     return;
   }
-  container.innerHTML = products.map(p => `
-    <div class="product-card">
-      <div class="product-image"><i class="fas ${p.icon}"></i></div>
-      <div class="product-info">
-        <span class="product-category">${p.category}</span>
-        <span class="product-vendor"><i class="fas fa-store"></i> ${p.vendor}</span>
-        <h3 class="product-title">${p.title}</h3>
-        <p class="product-desc">${p.desc}</p>
-        <div class="product-footer">
-          <span class="product-price">${formatPrice(p.price)}</span>
-          <button class="btn-small" onclick="addToCart(${p.id})">
-            <i class="fas fa-cart-plus"></i> Add
-          </button>
+  container.innerHTML = products.map(p => {
+    let imageHtml = '';
+    if (p.image) {
+      imageHtml = `<img src="${p.image}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      imageHtml = `<i class="fas ${p.icon || 'fa-code'}"></i>`;
+    }
+    
+    return `
+      <div class="product-card">
+        <div class="product-image">${imageHtml}</div>
+        <div class="product-info">
+          <span class="product-category">${p.category}</span>
+          <span class="product-vendor"><i class="fas fa-store"></i> ${p.vendor}</span>
+          <h3 class="product-title">${p.title}</h3>
+          <p class="product-desc">${p.desc}</p>
+          <div class="product-footer">
+            <span class="product-price">${formatPrice(p.price)}</span>
+            <button class="btn-small" onclick="addToCart(${p.id})">
+              <i class="fas fa-cart-plus"></i> Add
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderFeatured() {
@@ -335,8 +361,8 @@ function searchProducts() {
   const query = document.getElementById('searchInput').value.toLowerCase();
   const filtered = PRODUCTS.filter(p => 
     p.title.toLowerCase().includes(query) || 
-    p.desc.toLowerCase().includes(query) ||
-    p.vendor.toLowerCase().includes(query)
+    (p.desc && p.desc.toLowerCase().includes(query)) ||
+    (p.vendor && p.vendor.toLowerCase().includes(query))
   );
   renderProducts('allProducts', filtered);
 }
@@ -346,7 +372,7 @@ function searchProducts() {
 // ============================================
 function addToCart(productId) {
   if (!currentUser) {
-    showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
+    showToast('️ សូម Login ជាមុនសិន!', 'error');
     showPage('login');
     return;
   }
@@ -384,18 +410,30 @@ function renderCart() {
     return;
   }
 
-  container.innerHTML = cart.map(item => `
-    <div class="cart-item">
-      <div class="cart-item-info">
-        <h4><i class="fas ${item.icon}"></i> ${item.title}</h4>
-        <p>${item.desc}</p>
+  container.innerHTML = cart.map(item => {
+    let imageHtml = '';
+    if (item.image) {
+      imageHtml = `<img src="${item.image}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin-right:10px;">`;
+    } else {
+      imageHtml = `<i class="fas ${item.icon || 'fa-code'}" style="font-size:2rem;margin-right:10px;color:var(--primary);"></i>`;
+    }
+    
+    return `
+      <div class="cart-item">
+        <div class="cart-item-info" style="display:flex;align-items:center;">
+          ${imageHtml}
+          <div>
+            <h4>${item.title}</h4>
+            <p>${item.desc}</p>
+          </div>
+        </div>
+        <span class="cart-item-price">${formatPrice(item.price)}</span>
+        <button class="btn-danger" onclick="removeFromCart(${item.id})">
+          <i class="fas fa-trash"></i>
+        </button>
       </div>
-      <span class="cart-item-price">${formatPrice(item.price)}</span>
-      <button class="btn-danger" onclick="removeFromCart(${item.id})">
-        <i class="fas fa-trash"></i>
-      </button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
   let discount = 0;
@@ -421,7 +459,7 @@ function renderCart() {
 function applyCoupon() {
   const code = document.getElementById('couponInput').value.trim().toUpperCase();
   const coupon = COUPONS[code];
-  if (!coupon) { showToast('❌ កូដមិនត្រឹមត្រូវ!', 'error'); return; }
+  if (!coupon) { showToast('❌ កូដមិនត្រឹមតរូវ!', 'error'); return; }
   const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
   if (coupon.minOrder && subtotal < coupon.minOrder) {
     showToast(`⚠️ តម្រូវឱ្យទិញយ៉ាងតិច ${formatPrice(coupon.minOrder)}`, 'error');
@@ -429,7 +467,7 @@ function applyCoupon() {
   }
   appliedCoupon = coupon;
   renderCart();
-  showToast('✅ បានប្រើកូដបញ្ចុះតម្លៃ!');
+  showToast('✅ បានប្រើកូដបញ្ចុះតមលៃ!');
 }
 
 // ============================================
@@ -446,8 +484,156 @@ function checkout() {
     return;
   }
   
+  const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
+  let discount = 0;
+  if (appliedCoupon) {
+    discount = appliedCoupon.type === 'percent' 
+      ? subtotal * (appliedCoupon.discount / 100) 
+      : appliedCoupon.discount;
+  }
+  const total = subtotal - discount;
+  
+  createOrderWithBakong(total);
+}
+
+async function createOrderWithBakong(totalAmount) {
+  try {
+    showToast('⏳ កំពុងបង្កើត Order...');
+    
+    const firstProduct = cart[0];
+    
+    const response = await fetch(`${PAYMENT_API_URL}/api/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        player_name: currentUser.name,
+        user_email: currentUser.email,
+        item_type: 'product',
+        item_id: firstProduct.id
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      showPaymentModal(data);
+      startPaymentMonitoring(data.transaction_id, data.order_id);
+    } else {
+      showToast('❌ ' + (data.message || 'Failed to create order'), 'error');
+    }
+    
+  } catch (error) {
+    console.error('Payment error:', error);
+    showToast('❌ Connection error. Please try again.', 'error');
+  }
+}
+
+function showPaymentModal(paymentData) {
+  document.getElementById('paymentModal').classList.add('active');
+  document.getElementById('paymentOrderId').textContent = paymentData.order_id;
+  document.getElementById('paymentAmountUSD').textContent = '$' + paymentData.price_usd.toFixed(2);
+  document.getElementById('paymentAmountKHR').textContent = '៛' + paymentData.price_khr.toLocaleString();
+  
+  generateQRCode(paymentData.khqr_string);
+  startPaymentTimer(600);
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentModal').classList.remove('active');
+  if (paymentCheckInterval) clearInterval(paymentCheckInterval);
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+function generateQRCode(qrString) {
+  const canvas = document.getElementById('qrCanvas');
+  if (typeof QRCode !== 'undefined' && canvas) {
+    QRCode.toCanvas(canvas, qrString, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' }
+    });
+  }
+}
+
+let paymentCheckInterval = null;
+
+function startPaymentMonitoring(transactionId, orderId) {
+  let checkCount = 0;
+  const maxChecks = 120;
+  
+  paymentCheckInterval = setInterval(async () => {
+    checkCount++;
+    
+    try {
+      const response = await fetch(`${PAYMENT_API_URL}/api/check-status/${transactionId}`);
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.order_status === 'paid') {
+        clearInterval(paymentCheckInterval);
+        clearInterval(timerInterval);
+        
+        document.getElementById('paymentStatus').innerHTML = `
+          <div class="status-success">
+            <i class="fas fa-check-circle"></i>
+            <p>Payment Verified!</p>
+          </div>
+        `;
+        
+        savePurchasesToUser();
+        
+        setTimeout(() => {
+          closePaymentModal();
+          showSuccessModal(orderId);
+        }, 2000);
+        
+      } else if (checkCount >= maxChecks) {
+        clearInterval(paymentCheckInterval);
+        clearInterval(timerInterval);
+        
+        document.getElementById('paymentStatus').innerHTML = `
+          <div class="status-pending" style="color: var(--danger);">
+            <i class="fas fa-times-circle"></i>
+            <p>Payment expired</p>
+          </div>
+        `;
+        
+        setTimeout(() => {
+          closePaymentModal();
+          showToast('⏰ Payment expired. Please try again.', 'error');
+        }, 3000);
+      }
+      
+    } catch (error) {
+      console.error('Check status error:', error);
+    }
+    
+  }, 5000);
+}
+
+let timerInterval = null;
+
+function startPaymentTimer(seconds) {
+  let remaining = seconds;
+  
+  timerInterval = setInterval(() => {
+    remaining--;
+    
+    const minutes = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    
+    document.getElementById('paymentTimer').textContent = 
+      `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    if (remaining <= 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+function savePurchasesToUser() {
   const users = JSON.parse(localStorage.getItem('users')) || [];
   const userIndex = users.findIndex(u => u.email === currentUser.email);
+  
   if (userIndex !== -1) {
     if (!users[userIndex].purchases) users[userIndex].purchases = [];
     users[userIndex].purchases.push(...cart);
@@ -455,9 +641,6 @@ function checkout() {
     currentUser = users[userIndex];
     localStorage.setItem('current_user', JSON.stringify(currentUser));
   }
-  
-  const orderId = 'ORD-' + Date.now().toString().slice(-8);
-  showSuccessModal(orderId);
   
   cart = [];
   appliedCoupon = null;
@@ -493,19 +676,28 @@ function renderDashboard() {
     return;
   }
   const container = document.getElementById('myPurchases');
-  container.innerHTML = purchases.map(p => `
-    <div class="product-card">
-      <div class="product-image"><i class="fas ${p.icon}"></i></div>
-      <div class="product-info">
-        <span class="product-category">${p.category}</span>
-        <h3 class="product-title">${p.title}</h3>
-        <p class="product-desc">${p.desc}</p>
-        <button class="btn-primary btn-full" onclick="downloadProduct('${p.title}')">
-          <i class="fas fa-download"></i> Download
-        </button>
+  container.innerHTML = purchases.map(p => {
+    let imageHtml = '';
+    if (p.image) {
+      imageHtml = `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      imageHtml = `<i class="fas ${p.icon || 'fa-code'}"></i>`;
+    }
+    
+    return `
+      <div class="product-card">
+        <div class="product-image">${imageHtml}</div>
+        <div class="product-info">
+          <span class="product-category">${p.category}</span>
+          <h3 class="product-title">${p.title}</h3>
+          <p class="product-desc">${p.desc}</p>
+          <button class="btn-primary btn-full" onclick="downloadProduct('${p.title}')">
+            <i class="fas fa-download"></i> Download
+          </button>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function downloadProduct(title) {
@@ -513,7 +705,7 @@ function downloadProduct(title) {
 }
 
 // ============================================
-// AFFILIATE
+// AFFILIATE & SHARE
 // ============================================
 function generateAffiliateCode() {
   return 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
@@ -528,9 +720,6 @@ function trackAffiliateClick(refCode) {
   }
 }
 
-// ============================================
-// SHARE LINK FUNCTION
-// ============================================
 function shareLink() {
   if (!currentUser) {
     showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
@@ -544,7 +733,7 @@ function shareLink() {
   const sharedDevices = JSON.parse(localStorage.getItem(SHARE_STORAGE_KEY) || '[]');
   
   if (sharedDevices.includes(deviceFingerprint)) {
-    showToast('⚠️ អ្នកបាន Share រួចហើយ! (១ Device = ១ ដង)', 'error');
+    showToast('️ អ្នកបាន Share រួចហើយ! ( Device = ១ ដង)', 'error');
     return;
   }
   
