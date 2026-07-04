@@ -1,9 +1,15 @@
 // ============================================
+// CONFIGURATION
+// ============================================
+const SHARE_BASE_URL = 'https://www.forestsmp.site';
+const SHARE_STORAGE_KEY = 'share_clicked_devices';
+
+// ============================================
 // DATA
 // ============================================
 let PRODUCTS = JSON.parse(localStorage.getItem('products')) || [
-  { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសមរាប់ហាងអនឡាញ", vendor: "DevMaster" },
-  { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សមរាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
+  { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសម្រាប់ហាងអនឡាញ", vendor: "DevMaster" },
+  { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សម្រាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
   { id: 3, title: "Portfolio Template", category: "template", price: 19, icon: "fa-briefcase", desc: "Template ស្អាតសម្រាប់ Portfolio", vendor: "TemplateHub" },
   { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" }
 ];
@@ -36,22 +42,26 @@ document.addEventListener('DOMContentLoaded', () => {
   document.documentElement.setAttribute('data-theme', currentTheme);
   updateThemeIcon();
   
+  const urlParams = new URLSearchParams(window.location.search);
+  const ref = urlParams.get('ref');
+  if (ref) {
+    trackAffiliateClick(ref);
+  }
+  
   renderFeatured();
   updateCartCount();
   updateAuthUI();
 });
 
-// Listen for storage changes (when admin adds products)
+// Listen for storage changes
 window.addEventListener('storage', (e) => {
   if (e.key === 'products') {
     PRODUCTS = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
     renderFeatured();
     renderAllProducts('all');
-    showToast('🔄 Products updated!');
   }
 });
 
-// Refresh products when page gains focus
 window.addEventListener('focus', () => {
   PRODUCTS = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
   renderFeatured();
@@ -149,8 +159,16 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
   }
 
   const newUser = { 
-    id: Date.now(), name, email, phone, password, 
-    purchases: [], role: 'user'
+    id: Date.now(),
+    name, 
+    email, 
+    phone,
+    password, 
+    purchases: [],
+    affiliateCode: generateAffiliateCode(),
+    affiliateClicks: 0,
+    affiliateEarnings: 0,
+    role: 'user'
   };
   users.push(newUser);
   localStorage.setItem('users', JSON.stringify(users));
@@ -179,7 +197,7 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   currentUser = user;
   localStorage.setItem('current_user', JSON.stringify(user));
   updateAuthUI();
-  showToast('✅ Login ជោគជ័យ! សូមស្វាគមន ' + user.name);
+  showToast('✅ Login ជោគជ័យ! សូមស្វាគមន៍ ' + user.name);
   showPage('dashboard');
   e.target.reset();
 });
@@ -197,10 +215,16 @@ function updateAuthUI() {
   const profileName = document.getElementById('profileName');
   const profileEmail = document.getElementById('profileEmail');
   const profileAuth = document.getElementById('profileAuth');
+  const shareMenuItem = document.getElementById('shareMenuItem');
   
   if (currentUser) {
     if (profileName) profileName.textContent = currentUser.name;
     if (profileEmail) profileEmail.textContent = currentUser.email;
+    
+    if (shareMenuItem) {
+      shareMenuItem.style.display = 'block';
+      updateShareButtonState();
+    }
     
     if (sidebarAuth) {
       sidebarAuth.innerHTML = `
@@ -219,6 +243,7 @@ function updateAuthUI() {
   } else {
     if (profileName) profileName.textContent = 'Guest';
     if (profileEmail) profileEmail.textContent = 'Please login';
+    if (shareMenuItem) shareMenuItem.style.display = 'none';
     if (sidebarAuth) {
       sidebarAuth.innerHTML = `<a href="#" onclick="showPage('login'); toggleSidebar();"><i class="fas fa-sign-in-alt"></i> Login</a>`;
     }
@@ -321,7 +346,7 @@ function searchProducts() {
 // ============================================
 function addToCart(productId) {
   if (!currentUser) {
-    showToast('️ សូម Login ជាមុនសិន!', 'error');
+    showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
     showPage('login');
     return;
   }
@@ -399,7 +424,7 @@ function applyCoupon() {
   if (!coupon) { showToast('❌ កូដមិនត្រឹមត្រូវ!', 'error'); return; }
   const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
   if (coupon.minOrder && subtotal < coupon.minOrder) {
-    showToast(`️ តម្រូវឱ្យទិញយ៉ាងតិច ${formatPrice(coupon.minOrder)}`, 'error');
+    showToast(`⚠️ តម្រូវឱ្យទិញយ៉ាងតិច ${formatPrice(coupon.minOrder)}`, 'error');
     return;
   }
   appliedCoupon = coupon;
@@ -412,7 +437,7 @@ function applyCoupon() {
 // ============================================
 function checkout() {
   if (!currentUser) {
-    showToast('️ សូម Login ជាមុនសិន!', 'error');
+    showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
     showPage('login');
     return;
   }
@@ -421,7 +446,6 @@ function checkout() {
     return;
   }
   
-  // Save purchases to user
   const users = JSON.parse(localStorage.getItem('users')) || [];
   const userIndex = users.findIndex(u => u.email === currentUser.email);
   if (userIndex !== -1) {
@@ -486,6 +510,180 @@ function renderDashboard() {
 
 function downloadProduct(title) {
   showToast(`⬇️ កំពុងទាញយក: ${title}`);
+}
+
+// ============================================
+// AFFILIATE
+// ============================================
+function generateAffiliateCode() {
+  return 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
+}
+
+function trackAffiliateClick(refCode) {
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const user = users.find(u => u.affiliateCode === refCode);
+  if (user) {
+    user.affiliateClicks = (user.affiliateClicks || 0) + 1;
+    localStorage.setItem('users', JSON.stringify(users));
+  }
+}
+
+// ============================================
+// SHARE LINK FUNCTION
+// ============================================
+function shareLink() {
+  if (!currentUser) {
+    showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
+    showPage('login');
+    return;
+  }
+  
+  toggleProfileDropdown();
+  
+  const deviceFingerprint = getDeviceFingerprint();
+  const sharedDevices = JSON.parse(localStorage.getItem(SHARE_STORAGE_KEY) || '[]');
+  
+  if (sharedDevices.includes(deviceFingerprint)) {
+    showToast('⚠️ អ្នកបាន Share រួចហើយ! (១ Device = ១ ដង)', 'error');
+    return;
+  }
+  
+  const affiliateCode = currentUser.affiliateCode || generateAffiliateCode();
+  const shareUrl = `${SHARE_BASE_URL}/?ref=${affiliateCode}`;
+  
+  copyToClipboard(shareUrl).then(() => {
+    sharedDevices.push(deviceFingerprint);
+    localStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(sharedDevices));
+    
+    updateShareButtonState();
+    showShareSuccessModal(shareUrl);
+    showToast('✅ បាន Copy Link សម្រាប់ Share!');
+  }).catch(err => {
+    console.error('Copy failed:', err);
+    showToast('❌ មិនអាច Copy បានទេ', 'error');
+  });
+}
+
+function getDeviceFingerprint() {
+  let fingerprint = localStorage.getItem('device_fingerprint');
+  
+  if (!fingerprint) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('AhnajakCode', 2, 2);
+    
+    const data = [
+      navigator.userAgent,
+      navigator.language,
+      screen.width + 'x' + screen.height,
+      new Date().getTimezoneOffset(),
+      canvas.toDataURL(),
+      navigator.hardwareConcurrency || 'unknown',
+      navigator.platform || 'unknown'
+    ].join('|');
+    
+    fingerprint = 'FP_' + simpleHash(data);
+    localStorage.setItem('device_fingerprint', fingerprint);
+  }
+  
+  return fingerprint;
+}
+
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36).toUpperCase();
+}
+
+async function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+  
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  
+  try {
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return true;
+  } catch (err) {
+    document.body.removeChild(textarea);
+    throw err;
+  }
+}
+
+function showShareSuccessModal(url) {
+  let modal = document.getElementById('shareSuccessModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'shareSuccessModal';
+    modal.className = 'share-success-modal';
+    modal.innerHTML = `
+      <div class="share-success-content">
+        <div class="share-success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 style="color: var(--success); margin-bottom: 15px;">🎉 Share Successful!</h2>
+        <p style="color: var(--text-muted); margin-bottom: 15px;">
+          Link របស់អ្នកត្រូវបាន Copy រួចរាល់!<br>
+          ចែករំលែកទៅកាន់មិត្តភក្តិ ហើយទទួលបាន <strong style="color: var(--success);">10% Commission</strong>
+        </p>
+        <div class="share-link-box" id="shareLinkDisplay"></div>
+        <button class="btn-primary btn-full" onclick="closeShareSuccessModal()" style="margin-top: 15px;">
+          <i class="fas fa-thumbs-up"></i> Awesome!
+        </button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  document.getElementById('shareLinkDisplay').textContent = url;
+  modal.classList.add('active');
+}
+
+function closeShareSuccessModal() {
+  const modal = document.getElementById('shareSuccessModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function updateShareButtonState() {
+  const deviceFingerprint = getDeviceFingerprint();
+  const sharedDevices = JSON.parse(localStorage.getItem(SHARE_STORAGE_KEY) || '[]');
+  const hasShared = sharedDevices.includes(deviceFingerprint);
+  
+  const shareItem = document.getElementById('shareMenuItem');
+  const shareBadge = document.getElementById('shareBadge');
+  
+  if (!shareItem) return;
+  
+  if (hasShared) {
+    shareItem.querySelector('a').classList.add('disabled');
+    shareItem.querySelector('a').setAttribute('onclick', 'event.preventDefault(); showToast("⚠️ អ្នកបាន Share រួចហើយ!", "error");');
+    if (shareBadge) {
+      shareBadge.textContent = '✓ Done';
+      shareBadge.style.background = 'var(--text-muted)';
+    }
+  } else {
+    shareItem.querySelector('a').classList.remove('disabled');
+    shareItem.querySelector('a').setAttribute('onclick', 'shareLink()');
+    if (shareBadge) {
+      shareBadge.textContent = '+10%';
+      shareBadge.style.background = 'var(--success)';
+    }
+  }
 }
 
 // ============================================
