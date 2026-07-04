@@ -1,17 +1,11 @@
-// ============ DATA ============
-const PRODUCTS = [
-  { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសម្រាប់ហាងអនឡាញ", vendor: "DevMaster" },
-  { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សម្រាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
+// ============================================
+// DATA
+// ============================================
+let PRODUCTS = JSON.parse(localStorage.getItem('products')) || [
+  { id: 1, title: "E-commerce Script", category: "script", price: 49, icon: "fa-shopping-cart", desc: "Script ពេញលេញសមរាប់ហាងអនឡាញ", vendor: "DevMaster" },
+  { id: 2, title: "WordPress SEO Plugin", category: "plugin", price: 29, icon: "fa-plug", desc: "Plugin សមរាប់បង្កើន SEO របស់អ្នក", vendor: "PluginPro" },
   { id: 3, title: "Portfolio Template", category: "template", price: 19, icon: "fa-briefcase", desc: "Template ស្អាតសម្រាប់ Portfolio", vendor: "TemplateHub" },
-  { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" },
-  { id: 5, title: "Chat App Script", category: "script", price: 59, icon: "fa-comments", desc: "Real-time chat application", vendor: "DevMaster" },
-  { id: 6, title: "Payment Gateway Plugin", category: "plugin", price: 35, icon: "fa-credit-card", desc: "ភ្ជាប់ ABA/Stripe ទៅវេបសាយ", vendor: "PluginPro" },
-  { id: 7, title: "Blog Template", category: "template", price: 15, icon: "fa-blog", desc: "Template សម្រាប់ Blog ស្អាតៗ", vendor: "TemplateHub" },
-  { id: 8, title: "Mobile App UI Kit", category: "ui", price: 45, icon: "fa-mobile-alt", desc: "UI Kit សម្រាប់ Mobile App", vendor: "UIDesign" },
-  { id: 9, title: "Booking System Script", category: "script", price: 69, icon: "fa-calendar-check", desc: "ប្រព័ន្ធកក់ទុកសម្រាប់សេវាកម្ម", vendor: "DevMaster" },
-  { id: 10, title: "Security Plugin", category: "plugin", price: 25, icon: "fa-shield-alt", desc: "ការពារវេបសាយពី Hackers", vendor: "PluginPro" },
-  { id: 11, title: "Landing Page Template", category: "template", price: 22, icon: "fa-rocket", desc: "Template សម្រាប់ Landing Page", vendor: "TemplateHub" },
-  { id: 12, title: "Icon Pack UI", category: "ui", price: 12, icon: "fa-icons", desc: "5000+ Icons សម្រាប់ Design", vendor: "UIDesign" }
+  { id: 4, title: "Admin Dashboard UI", category: "ui", price: 39, icon: "fa-chart-line", desc: "UI Kit សម្រាប់ Admin Dashboard", vendor: "UIDesign" }
 ];
 
 const COUPONS = {
@@ -23,35 +17,50 @@ const COUPONS = {
 const CURRENCY_RATES = { USD: 1, KHR: 4100, THB: 35, EUR: 0.92 };
 const CURRENCY_SYMBOLS = { USD: '$', KHR: '៛', THB: '฿', EUR: '€' };
 
-// ============ STATE ============
+// ============================================
+// STATE
+// ============================================
 let currentUser = JSON.parse(localStorage.getItem('current_user')) || null;
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentCurrency = localStorage.getItem('currency') || 'USD';
 let currentTheme = localStorage.getItem('theme') || 'dark';
 let appliedCoupon = null;
 
-// ============ INIT ============
+// ============================================
+// INIT
+// ============================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Set initial currency
-  document.getElementById('currencySelect').value = currentCurrency;
+  const currencySelect = document.getElementById('currencySelect');
+  if (currencySelect) currencySelect.value = currentCurrency;
   
-  // Set initial theme
   document.documentElement.setAttribute('data-theme', currentTheme);
   updateThemeIcon();
-  
-  // Check for affiliate ref
-  const urlParams = new URLSearchParams(window.location.search);
-  const ref = urlParams.get('ref');
-  if (ref) {
-    trackAffiliateClick(ref);
-  }
   
   renderFeatured();
   updateCartCount();
   updateAuthUI();
 });
 
-// ============ THEME TOGGLE ============
+// Listen for storage changes (when admin adds products)
+window.addEventListener('storage', (e) => {
+  if (e.key === 'products') {
+    PRODUCTS = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
+    renderFeatured();
+    renderAllProducts('all');
+    showToast('🔄 Products updated!');
+  }
+});
+
+// Refresh products when page gains focus
+window.addEventListener('focus', () => {
+  PRODUCTS = JSON.parse(localStorage.getItem('products')) || PRODUCTS;
+  renderFeatured();
+  renderAllProducts('all');
+});
+
+// ============================================
+// THEME
+// ============================================
 function toggleTheme() {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
@@ -61,64 +70,76 @@ function toggleTheme() {
 
 function updateThemeIcon() {
   const icon = document.getElementById('themeIcon');
-  icon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+  if (icon) icon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
 }
 
-// ============ CURRENCY ============
+// ============================================
+// CURRENCY
+// ============================================
 function changeCurrency() {
   currentCurrency = document.getElementById('currencySelect').value;
   localStorage.setItem('currency', currentCurrency);
   renderFeatured();
   renderAllProducts('all');
   renderCart();
-  if (currentUser) renderDashboard();
 }
 
 function formatPrice(priceUSD) {
   const converted = priceUSD * CURRENCY_RATES[currentCurrency];
   const symbol = CURRENCY_SYMBOLS[currentCurrency];
-  
-  if (currentCurrency === 'KHR') {
-    return symbol + converted.toLocaleString();
-  }
+  if (currentCurrency === 'KHR') return symbol + converted.toLocaleString();
   return symbol + converted.toFixed(2);
 }
 
-// ============ MOBILE MENU ============
-function toggleMobileMenu() {
-  document.getElementById('navLinks').classList.toggle('active');
+// ============================================
+// SIDEBAR & PROFILE
+// ============================================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
 }
 
-// Close menu when clicking outside
+function toggleProfileDropdown() {
+  document.getElementById('profileDropdown').classList.toggle('active');
+}
+
 document.addEventListener('click', (e) => {
-  const nav = document.querySelector('.navbar');
-  const menu = document.getElementById('navLinks');
-  const toggle = document.querySelector('.mobile-menu-toggle');
-  
-  if (!nav.contains(e.target) && menu.classList.contains('active')) {
-    menu.classList.remove('active');
+  const dropdown = document.getElementById('profileDropdown');
+  const profileIcon = document.querySelector('.profile-icon');
+  if (dropdown && profileIcon && !dropdown.contains(e.target) && !profileIcon.contains(e.target)) {
+    dropdown.classList.remove('active');
   }
 });
 
-// ============ PAGE NAVIGATION ============
+// ============================================
+// PAGE NAVIGATION
+// ============================================
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
   window.scrollTo(0, 0);
   
-  // Close mobile menu
-  document.getElementById('navLinks').classList.remove('active');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const dropdown = document.getElementById('profileDropdown');
+  if (sidebar) sidebar.classList.remove('active');
+  if (overlay) overlay.classList.remove('active');
+  if (dropdown) dropdown.classList.remove('active');
 
   if (pageId === 'cart') renderCart();
   if (pageId === 'dashboard') renderDashboard();
   if (pageId === 'products') renderAllProducts('all');
+  if (pageId === 'profile') renderProfile();
 }
 
-// ============ AUTH ============
+// ============================================
+// AUTH
+// ============================================
 document.getElementById('registerForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const phone = document.getElementById('regPhone').value.trim();
   const password = document.getElementById('regPassword').value;
 
   const users = JSON.parse(localStorage.getItem('users')) || [];
@@ -128,13 +149,8 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
   }
 
   const newUser = { 
-    name, 
-    email, 
-    password, 
-    purchases: [],
-    affiliateCode: generateAffiliateCode(),
-    affiliateClicks: 0,
-    affiliateEarnings: 0
+    id: Date.now(), name, email, phone, password, 
+    purchases: [], role: 'user'
   };
   users.push(newUser);
   localStorage.setItem('users', JSON.stringify(users));
@@ -163,7 +179,7 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   currentUser = user;
   localStorage.setItem('current_user', JSON.stringify(user));
   updateAuthUI();
-  showToast('✅ Login ជោគជ័យ! សូមស្វាគមន៍ ' + user.name);
+  showToast('✅ Login ជោគជ័យ! សូមស្វាគមន ' + user.name);
   showPage('dashboard');
   e.target.reset();
 });
@@ -177,20 +193,79 @@ function logout() {
 }
 
 function updateAuthUI() {
-  const authNav = document.getElementById('authNav');
+  const sidebarAuth = document.getElementById('sidebarAuth');
+  const profileName = document.getElementById('profileName');
+  const profileEmail = document.getElementById('profileEmail');
+  const profileAuth = document.getElementById('profileAuth');
+  
   if (currentUser) {
-    authNav.innerHTML = `
-      <a href="#" onclick="showPage('dashboard')" class="btn-login">
-        <i class="fas fa-user"></i> ${currentUser.name.split(' ')[0]}
-      </a>`;
+    if (profileName) profileName.textContent = currentUser.name;
+    if (profileEmail) profileEmail.textContent = currentUser.email;
+    
+    if (sidebarAuth) {
+      sidebarAuth.innerHTML = `
+        <a href="#" onclick="showPage('profile'); toggleSidebar();"><i class="fas fa-user"></i> My Profile</a>
+        <a href="#" onclick="showPage('dashboard'); toggleSidebar();"><i class="fas fa-box"></i> My Purchases</a>
+        <a href="#" onclick="logout(); toggleSidebar();"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      `;
+    }
+    if (profileAuth) {
+      profileAuth.innerHTML = `
+        <a href="#" onclick="showPage('profile'); toggleProfileDropdown();"><i class="fas fa-user"></i> My Profile</a>
+        <a href="#" onclick="showPage('dashboard'); toggleProfileDropdown();"><i class="fas fa-box"></i> My Purchases</a>
+        <a href="#" onclick="logout(); toggleProfileDropdown();"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      `;
+    }
   } else {
-    authNav.innerHTML = `<a href="#" onclick="showPage('login')" class="btn-login">Login</a>`;
+    if (profileName) profileName.textContent = 'Guest';
+    if (profileEmail) profileEmail.textContent = 'Please login';
+    if (sidebarAuth) {
+      sidebarAuth.innerHTML = `<a href="#" onclick="showPage('login'); toggleSidebar();"><i class="fas fa-sign-in-alt"></i> Login</a>`;
+    }
+    if (profileAuth) {
+      profileAuth.innerHTML = `<a href="#" onclick="showPage('login'); toggleProfileDropdown();"><i class="fas fa-sign-in-alt"></i> Login / Register</a>`;
+    }
   }
 }
 
-// ============ PRODUCTS ============
+// ============================================
+// PROFILE
+// ============================================
+function renderProfile() {
+  if (!currentUser) { showPage('login'); return; }
+  document.getElementById('profileNameInput').value = currentUser.name;
+  document.getElementById('profileEmailInput').value = currentUser.email;
+  document.getElementById('profilePhoneInput').value = currentUser.phone || '';
+}
+
+document.getElementById('profileForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('profileNameInput').value.trim();
+  const email = document.getElementById('profileEmailInput').value.trim().toLowerCase();
+  const phone = document.getElementById('profilePhoneInput').value.trim();
+  
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const userIndex = users.findIndex(u => u.email === currentUser.email);
+  if (userIndex === -1) return;
+  
+  users[userIndex].name = name;
+  users[userIndex].email = email;
+  users[userIndex].phone = phone;
+  
+  localStorage.setItem('users', JSON.stringify(users));
+  currentUser = users[userIndex];
+  localStorage.setItem('current_user', JSON.stringify(currentUser));
+  updateAuthUI();
+  showToast('✅ Profile updated successfully!');
+});
+
+// ============================================
+// PRODUCTS
+// ============================================
 function renderProducts(containerId, products) {
   const container = document.getElementById(containerId);
+  if (!container) return;
+  
   if (!products.length) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;">No products found</p>';
     return;
@@ -223,7 +298,6 @@ function renderAllProducts(category) {
   renderProducts('allProducts', filtered);
 }
 
-// Filter buttons
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -232,7 +306,6 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-// Search
 function searchProducts() {
   const query = document.getElementById('searchInput').value.toLowerCase();
   const filtered = PRODUCTS.filter(p => 
@@ -243,10 +316,12 @@ function searchProducts() {
   renderProducts('allProducts', filtered);
 }
 
-// ============ CART ============
+// ============================================
+// CART
+// ============================================
 function addToCart(productId) {
   if (!currentUser) {
-    showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
+    showToast('️ សូម Login ជាមុនសិន!', 'error');
     showPage('login');
     return;
   }
@@ -269,12 +344,14 @@ function removeFromCart(productId) {
 }
 
 function updateCartCount() {
-  document.getElementById('cartCount').textContent = cart.length;
+  const el = document.getElementById('cartCount');
+  if (el) el.textContent = cart.length;
 }
 
 function renderCart() {
   const container = document.getElementById('cartItems');
   const summary = document.getElementById('cartSummary');
+  if (!container || !summary) return;
 
   if (!cart.length) {
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">🛒 Cart របស់អ្នកទទេ</p>';
@@ -297,13 +374,11 @@ function renderCart() {
 
   const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
   let discount = 0;
-  
   if (appliedCoupon) {
     discount = appliedCoupon.type === 'percent' 
       ? subtotal * (appliedCoupon.discount / 100) 
       : appliedCoupon.discount;
   }
-  
   const total = subtotal - discount;
   
   document.getElementById('cartSubtotal').textContent = formatPrice(subtotal);
@@ -315,111 +390,77 @@ function renderCart() {
   } else {
     document.getElementById('discountRow').style.display = 'none';
   }
-  
   summary.style.display = 'block';
 }
 
 function applyCoupon() {
   const code = document.getElementById('couponInput').value.trim().toUpperCase();
   const coupon = COUPONS[code];
-  
-  if (!coupon) {
-    showToast('❌ កូដមិនត្រឹមត្រូវ!', 'error');
-    return;
-  }
-  
+  if (!coupon) { showToast('❌ កូដមិនត្រឹមត្រូវ!', 'error'); return; }
   const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
-  
   if (coupon.minOrder && subtotal < coupon.minOrder) {
-    showToast(`⚠️ តម្រូវឱ្យទិញយ៉ាងតិច ${formatPrice(coupon.minOrder)}`, 'error');
+    showToast(`️ តម្រូវឱ្យទិញយ៉ាងតិច ${formatPrice(coupon.minOrder)}`, 'error');
     return;
   }
-  
   appliedCoupon = coupon;
   renderCart();
   showToast('✅ បានប្រើកូដបញ្ចុះតម្លៃ!');
 }
 
+// ============================================
+// CHECKOUT
+// ============================================
 function checkout() {
   if (!currentUser) {
-    showToast('⚠️ សូម Login ជាមុនសិន!', 'error');
+    showToast('️ សូម Login ជាមុនសិន!', 'error');
+    showPage('login');
     return;
   }
-  if (!cart.length) return;
-
-  const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
-  let discount = 0;
-  
-  if (appliedCoupon) {
-    discount = appliedCoupon.type === 'percent' 
-      ? subtotal * (appliedCoupon.discount / 100) 
-      : appliedCoupon.discount;
+  if (!cart.length) {
+    showToast('⚠️ Cart របស់អ្នកទទេ!', 'error');
+    return;
   }
   
-  const total = subtotal - discount;
-
-  // Save purchases
+  // Save purchases to user
   const users = JSON.parse(localStorage.getItem('users')) || [];
   const userIndex = users.findIndex(u => u.email === currentUser.email);
-  if (!users[userIndex].purchases) users[userIndex].purchases = [];
-  users[userIndex].purchases.push(...cart);
-  localStorage.setItem('users', JSON.stringify(users));
-  currentUser = users[userIndex];
-  localStorage.setItem('current_user', JSON.stringify(currentUser));
-
-  // Track affiliate earnings (if purchased via affiliate link)
-  const urlParams = new URLSearchParams(window.location.search);
-  const ref = urlParams.get('ref');
-  if (ref) {
-    const affiliateUser = users.find(u => u.affiliateCode === ref);
-    if (affiliateUser) {
-      affiliateUser.affiliateEarnings += total * 0.10; // 10% commission
-      localStorage.setItem('users', JSON.stringify(users));
-    }
+  if (userIndex !== -1) {
+    if (!users[userIndex].purchases) users[userIndex].purchases = [];
+    users[userIndex].purchases.push(...cart);
+    localStorage.setItem('users', JSON.stringify(users));
+    currentUser = users[userIndex];
+    localStorage.setItem('current_user', JSON.stringify(currentUser));
   }
-
-  showToast(`🎉 ទូទាត់ជោគជ័យ! អ្នកបានទិញ ${cart.length} ផលិតផល`);
+  
+  const orderId = 'ORD-' + Date.now().toString().slice(-8);
+  showSuccessModal(orderId);
+  
   cart = [];
   appliedCoupon = null;
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
+}
+
+function showSuccessModal(orderId) {
+  document.getElementById('successModal').classList.add('active');
+  const purchasesCount = (currentUser.purchases || []).length;
+  document.getElementById('successDetails').innerHTML = `
+    <div class="info-row"><span>Order ID:</span><strong>${orderId}</strong></div>
+    <div class="info-row"><span>Items:</span><strong>${purchasesCount} products</strong></div>
+  `;
+}
+
+function closeSuccessModal() {
+  document.getElementById('successModal').classList.remove('active');
   showPage('dashboard');
 }
 
-// ============ AFFILIATE ============
-function generateAffiliateCode() {
-  return 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
-}
-
-function copyAffiliateLink() {
-  const linkInput = document.getElementById('affiliateLink');
-  linkInput.select();
-  document.execCommand('copy');
-  showToast('✅ បាន Copy Affiliate Link!');
-}
-
-function trackAffiliateClick(refCode) {
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  const user = users.find(u => u.affiliateCode === refCode);
-  if (user) {
-    user.affiliateClicks = (user.affiliateClicks || 0) + 1;
-    localStorage.setItem('users', JSON.stringify(users));
-  }
-}
-
-// ============ DASHBOARD ============
+// ============================================
+// DASHBOARD
+// ============================================
 function renderDashboard() {
-  if (!currentUser) {
-    showPage('login');
-    return;
-  }
+  if (!currentUser) { showPage('login'); return; }
   document.getElementById('userName').textContent = currentUser.name;
-  
-  // Affiliate section
-  const affiliateLink = `${window.location.origin}?ref=${currentUser.affiliateCode}`;
-  document.getElementById('affiliateLink').value = affiliateLink;
-  document.getElementById('affiliateClicks').textContent = currentUser.affiliateClicks || 0;
-  document.getElementById('affiliateEarnings').textContent = formatPrice(currentUser.affiliateEarnings || 0);
   
   const purchases = currentUser.purchases || [];
   if (!purchases.length) {
@@ -447,10 +488,13 @@ function downloadProduct(title) {
   showToast(`⬇️ កំពុងទាញយក: ${title}`);
 }
 
-// ============ TOAST ============
+// ============================================
+// TOAST
+// ============================================
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = message;
   toast.className = 'toast show' + (type === 'error' ? ' error' : '');
   setTimeout(() => toast.classList.remove('show'), 3000);
-    }
+}
